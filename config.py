@@ -1,0 +1,1 @@
+DATABASE_CONNECTOR = 'postgresql://username:password@hostname/database'
