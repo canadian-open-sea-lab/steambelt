@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 import config
 
 
-engine = sqlalchemy.create_engine(config.DATABASE_CONNECTOR, echo=True)
+engine = sqlalchemy.create_engine(config.DATABASE_CONNECTOR)
 Base = declarative_base()
 
 
@@ -16,6 +16,10 @@ class Grid(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     crs = Column(String, nullable=False)
+    ullat = Column(Float, nullable=False)
+    ullon = Column(Float, nullable=False)
+    lrlat = Column(Float, nullable=False)
+    lrlon = Column(Float, nullable=False)
     cell_width = Column(Float, nullable=False)
     cell_height = Column(Float, nullable=False)
 
