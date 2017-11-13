@@ -1,13 +1,15 @@
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, sessionmaker
 from geoalchemy2 import Geometry
 
 import config
 
 
 engine = sqlalchemy.create_engine(config.DATABASE_CONNECTOR)
+Session = sessionmaker()
+Session.configure(bind=engine)
 Base = declarative_base()
 
 
@@ -36,8 +38,6 @@ class GridCell(Base):
     # lrlon = Column(Float, nullable=False)
     bounding_box = Column('geom', Geometry('POLYGON', srid=4326))
 
-    grid = relationship('grid')
-
 
 class DecisionLayer(Base):
     __tablename__ = 'decision_layer'
@@ -45,8 +45,6 @@ class DecisionLayer(Base):
     id = Column(Integer, primary_key=True)
     grid_id = Column(Integer, ForeignKey('grid.id'))
     creation_time = Column(DateTime, nullable=False)
-
-    grid = relationship('grid')
 
 
 class DecisionLayerCell(Base):
@@ -58,7 +56,6 @@ class DecisionLayerCell(Base):
     depth = Column(Float)
     temperature = Column(Float)
     wind_speed = Column(Float)
-
 
 
 
