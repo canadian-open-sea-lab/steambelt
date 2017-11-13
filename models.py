@@ -2,6 +2,7 @@ import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from geoalchemy2 import Geometry
 
 import config
 
@@ -15,11 +16,11 @@ class Grid(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    crs = Column(String, nullable=False)
-    ullat = Column(Float, nullable=False)
-    ullon = Column(Float, nullable=False)
-    lrlat = Column(Float, nullable=False)
-    lrlon = Column(Float, nullable=False)
+    # ullat = Column(Float, nullable=False)
+    # ullon = Column(Float, nullable=False)
+    # lrlat = Column(Float, nullable=False)
+    # lrlon = Column(Float, nullable=False)
+    bounding_box = Column('geom', Geometry('POLYGON', srid=4326))
     cell_width = Column(Float, nullable=False)
     cell_height = Column(Float, nullable=False)
 
@@ -29,10 +30,11 @@ class GridCell(Base):
 
     id = Column(Integer, primary_key=True)
     grid_id = Column(Integer, ForeignKey('grid.id'))
-    ullat = Column(Float, nullable=False)
-    ullon = Column(Float, nullable=False)
-    lrlat = Column(Float, nullable=False)
-    lrlon = Column(Float, nullable=False)
+    # ullat = Column(Float, nullable=False)
+    # ullon = Column(Float, nullable=False)
+    # lrlat = Column(Float, nullable=False)
+    # lrlon = Column(Float, nullable=False)
+    bounding_box = Column('geom', Geometry('POLYGON', srid=4326))
 
     grid = relationship('grid')
 
