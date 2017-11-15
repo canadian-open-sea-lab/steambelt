@@ -1,10 +1,13 @@
+import time
+
+import threading
+import Queue
+
 import numpy as np
 import pandas as pd
 
 from shapely.geometry import Polygon
 from geoalchemy2.shape import to_shape, from_shape
-
-import progressbar
 
 import models
 
@@ -41,6 +44,45 @@ def create_grid(name, bounding_box, cell_size=None, cell_width=None, cell_height
     return grid
 
 
+def generate_grid_cell(grid, x, y):
+    bounding_box = Polygon([
+        (x, y),
+        (x + grid.cell_width, y),
+        (x + grid.cell_width, y + grid.cell_height),
+        (x, y + grid.cell_height)
+    ])
+
+    return dict(
+        grid_id=grid.id,
+        bounding_box=from_shape(bounding_box)
+    )
+
+def dump_queue(queue):
+    """
+    Empties all pending items in a queue and returns them in a list.
+    """
+    result = []
+
+    for i in iter(queue.get, 'STOP'):
+        result.append(i)
+    time.sleep(.1)
+    return result
+
+
+def generate_grid_cell(grid, x, y, queue):
+    bounding_box = Polygon([
+        (x, y),
+        (x + grid.cell_width, y),
+        (x + grid.cell_width, y + grid.cell_height),
+        (x, y + grid.cell_height)
+    ])
+
+    queue.put(models.GridCell(
+        grid_id=grid.id,
+        bounding_box=from_shape(bounding_box, srid=4326)
+    ))
+
+
 def generate_grid_cells(grid):
     """Autogenerate a set of grid cells based on the grid specification.
 
@@ -59,23 +101,35 @@ def generate_grid_cells(grid):
 
     session = models.Session()
     cell_mappings = []
+
+    cell_queue = Queue.Queue()
+    threads = []
     i = 0
     for y, r in grid_cells.iterrows():
         for x, v in r.iteritems():
-            bounding_box = Polygon([
-                (x, y),
-                (x + grid.cell_width, y),
-                (x + grid.cell_width, y + grid.cell_height),
-                (x, y + grid.cell_height)
-            ])
-
-            cell_mappings.append(dict(
-                grid_id=grid.id,
-                bounding_box=from_shape(bounding_box)
-            ))
+            t = threading.Thread(target=generate_grid_cell, args=(grid, x, y, cell_queue))
+            t.start()
+            threads.append(t)
         i += 1
-        print("%s/%s" % (i, len(grid_cells)))
-    print("Generates %s cells, inserting" % (len(cell_mappings)))
-    session.bulk_insert_mappings(models.GridCell, cell_mappings)
+        if i % 1000 == 0:
+            print("Initializing threads: %s%%" % (i / len(grid_cells) * 100))
+            for t in threads:
+                t.join()
+            cell_queue.put('STOP')
+            cell_mappings = dump_queue(cell_queue)
+            print("Generated %s cells, inserting" % (len(cell_mappings)))
+            for c in cell_mappings:
+                session.add(c)
+            session.flush()
+            cell_queue = Queue.Queue()
+            threads = []
+    for t in threads:
+        t.join()
+    cell_queue.put('STOP')
+    cell_mappings = dump_queue(cell_queue)
+    print(cell_mappings[0])
+    print("Generated %s cells, inserting" % (len(cell_mappings)))
+    for c in cell_mappings:
+        session.add(c)
     session.commit()
     session.close()
