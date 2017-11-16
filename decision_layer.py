@@ -41,3 +41,11 @@ def generate_decision_layer_cells(session, decision_layer):
         ))
     session.bulk_insert_mappings(models.DecisionLayerCell, decision_cells)
     session.commit()
+
+def generate_decision_layer_cell_depth(session,path):
+    grid_cells = session.query(models.DecisionLayerCell, models.GridCell).join(models.GridCell).filter(models.GridCell.grid_id == 1).all()
+    depth_list = []
+    for cell in grid_cells:
+        grid_box = to_shape(cell.GridCell.bounding_box)
+        cell.DecisionLayerCell.depth = aggregate_depth(grid_box, path)
+    session.commit()

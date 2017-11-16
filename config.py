@@ -1,1 +1,1 @@
-DATABASE_CONNECTOR = 'postgresql://username:password@hostname/database'
+DATABASE_CONNECTOR = 'postgresql://:@localhost/steambelt'

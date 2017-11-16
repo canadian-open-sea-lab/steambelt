@@ -21,7 +21,7 @@ def aggregate_depth(grid_cell, path):
                         [cell.Longitude_BR, cell.Latitude_BR]
                     ])
 
-            if grid_cell.contains(bounds) or grid_cell.overlaps(bounds):
+            if bounds.contains(grid_cell) or grid_cell.contains(bounds) or grid_cell.overlaps(bounds):
                 min_lon,min_lat,max_lon,max_lat = list(grid_cell.intersection(bounds).bounds)
                 lons = cell.variables['COLUMNS'][:]
                 lats = cell.variables['LINES'][:]

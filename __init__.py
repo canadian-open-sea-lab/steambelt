@@ -23,6 +23,8 @@ def main():
     dl = decision_layer.generate_decision_layer(session, g)
     decision_layer.generate_decision_layer_cells(session, dl)
 
+    decision_layer.generate_decision_layer_cell_depth(session, '/home/bcovey/bathymetry/')
+
     session.close()
     return
 
