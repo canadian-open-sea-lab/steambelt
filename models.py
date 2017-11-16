@@ -56,6 +56,9 @@ class DecisionLayerCell(Base):
     depth = Column(Float)
     temperature = Column(Float)
     wind_speed = Column(Float)
+    wind_direction = Column(Float)
+    wind_std_dev = Column(Float)
+    seabed = Column(Float)
 
 
 
