@@ -25,6 +25,7 @@ def main():
 
     decision_layer.generate_decision_layer_cell_depth(session, '/Users/alexnunes/Desktop/osl_bathymetry/bathymetry/', g)
 
+    decision_layer.generate_decision_layer_cell_seabed(session,g)
     session.close()
     return
 
