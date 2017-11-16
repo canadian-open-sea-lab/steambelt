@@ -1,6 +1,7 @@
 import datetime
-
+from geoalchemy2.shape import to_shape
 import models
+from layers import aggregate_depth
 
 
 def generate_decision_layer(session, grid):
@@ -42,8 +43,8 @@ def generate_decision_layer_cells(session, decision_layer):
     session.bulk_insert_mappings(models.DecisionLayerCell, decision_cells)
     session.commit()
 
-def generate_decision_layer_cell_depth(session,path):
-    grid_cells = session.query(models.DecisionLayerCell, models.GridCell).join(models.GridCell).filter(models.GridCell.grid_id == 1).all()
+def generate_decision_layer_cell_depth(session,path,grid):
+    grid_cells = session.query(models.DecisionLayerCell, models.GridCell).join(models.GridCell).filter(models.GridCell.grid_id == grid.id).all()
     depth_list = []
     for cell in grid_cells:
         grid_box = to_shape(cell.GridCell.bounding_box)
