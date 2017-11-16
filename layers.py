@@ -34,4 +34,8 @@ def aggregate_depth(grid_cell, path):
                 else:
                     depth_values = depth_matrix.values.flatten()[~np.isnan(depth_matrix.values.flatten())]
             cell.close()
-    return np.average(depth_values)
+
+    avg_depth = np.average(depth_values)
+    if np.isnan(avg_depth):
+        avg_depth = None
+    return avg_depth
