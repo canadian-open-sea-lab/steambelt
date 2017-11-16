@@ -1,7 +1,9 @@
+import datetime
+
 import models
 
 
-def generate_dicision_layer(grid):
+def generate_decision_layer(session, grid):
     """Generate a new decision layer and a set of decision layer cells.
 
     Parameters
@@ -12,4 +14,30 @@ def generate_dicision_layer(grid):
     -------
     decision_layer(DecisionLayer): an sqlalchemy ORM entity for the created decision layer
     """
-    return
+    decision_layer = models.DecisionLayer(
+        grid_id=grid.id,
+        creation_time=datetime.datetime.now()
+    )
+    session.add(decision_layer)
+    session.commit()
+    return decision_layer
+
+
+def generate_decision_layer_cells(session, decision_layer):
+    """Generate the cells that make up a decision layer.
+
+    Parameters
+    ----------
+    session: sqlalchemy session
+    decision_layer: the sqlalchemy ORM entity for the target decision layer
+    """
+    grid_cells = session.query(models.GridCell).filter(models.GridCell.grid_id == decision_layer.grid_id).all()
+
+    decision_cells = []
+    for c in grid_cells:
+        decision_cells.append(dict(
+            decision_layer_id=decision_layer.id,
+            grid_cell_id=c.id
+        ))
+    session.bulk_insert_mappings(models.DecisionLayerCell, decision_cells)
+    session.commit()

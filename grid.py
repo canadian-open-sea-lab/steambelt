@@ -40,6 +40,7 @@ def create_grid(name, bounding_box, cell_size=None, cell_width=None, cell_height
         return loaded_grid
     session.add(grid)
     session.commit()
+    grid = session.query(models.Grid).filter(models.Grid.name == name).one_or_none()
     session.close()
     return grid
 
@@ -100,36 +101,37 @@ def generate_grid_cells(grid):
     grid_cells = pd.DataFrame(index=y_range, columns=x_range)
 
     session = models.Session()
-    cell_mappings = []
+    if len(session.query(models.GridCell).filter(models.GridCell.grid_id == grid.id).limit(2).all()) == 0:
+        cell_mappings = []
 
-    cell_queue = Queue.Queue()
-    threads = []
-    i = 0
-    for y, r in grid_cells.iterrows():
-        for x, v in r.iteritems():
-            t = threading.Thread(target=generate_grid_cell, args=(grid, x, y, cell_queue))
-            t.start()
-            threads.append(t)
-        i += 1
-        if i % 1000 == 0:
-            print("Initializing threads: %s%%" % (i / len(grid_cells) * 100))
-            for t in threads:
-                t.join()
-            cell_queue.put('STOP')
-            cell_mappings = dump_queue(cell_queue)
-            print("Generated %s cells, inserting" % (len(cell_mappings)))
-            for c in cell_mappings:
-                session.add(c)
-            session.flush()
-            cell_queue = Queue.Queue()
-            threads = []
-    for t in threads:
-        t.join()
-    cell_queue.put('STOP')
-    cell_mappings = dump_queue(cell_queue)
-    print(cell_mappings[0])
-    print("Generated %s cells, inserting" % (len(cell_mappings)))
-    for c in cell_mappings:
-        session.add(c)
-    session.commit()
-    session.close()
+        cell_queue = Queue.Queue()
+        threads = []
+        i = 0
+        for y, r in grid_cells.iterrows():
+            for x, v in r.iteritems():
+                t = threading.Thread(target=generate_grid_cell, args=(grid, x, y, cell_queue))
+                t.start()
+                threads.append(t)
+            i += 1
+            if i % 1000 == 0:
+                print("Initializing threads: %s%%" % (i / len(grid_cells) * 100))
+                for t in threads:
+                    t.join()
+                cell_queue.put('STOP')
+                cell_mappings = dump_queue(cell_queue)
+                print("Generated %s cells, inserting" % (len(cell_mappings)))
+                for c in cell_mappings:
+                    session.add(c)
+                session.flush()
+                cell_queue = Queue.Queue()
+                threads = []
+        for t in threads:
+            t.join()
+        cell_queue.put('STOP')
+        cell_mappings = dump_queue(cell_queue)
+        print(cell_mappings[0])
+        print("Generated %s cells, inserting" % (len(cell_mappings)))
+        for c in cell_mappings:
+            session.add(c)
+        session.commit()
+        session.close()
