@@ -16,7 +16,7 @@ from geoalchemy2.shape import to_shape
 import config
 
 
-def aggregate_wind(session, grid, target_dir=None):
+def aggregate_wind(session, grid, target_dir=None, absolute=True):
     min_lon,min_lat,max_lon,max_lat = list(to_shape(grid.bounding_box).bounds)
 
     if target_dir is None:
@@ -43,6 +43,8 @@ def aggregate_wind(session, grid, target_dir=None):
             index=filtered_lats,
             columns=filtered_lons
         )
+        if absolute:
+            u = u.abs()
         all_u.append(u)
 
         v = pd.DataFrame.from_records (
@@ -50,6 +52,8 @@ def aggregate_wind(session, grid, target_dir=None):
             index=filtered_lats,
             columns=filtered_lons
         )
+        if absolute:
+            v = v.abs()
         all_v.append(v)
 
         file_count += 1

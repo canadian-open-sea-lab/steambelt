@@ -25,11 +25,11 @@ def main():
     # decision_layer.generate_decision_layer_cells(session, dl)
 
     # decision_layer.generate_decision_layer_cell_depth(session, '/Users/alexnunes/Desktop/osl_bathymetry/bathymetry/', g)
-    decision_layer.generate_decision_layer_cell_seabed(session,g)
+    # decision_layer.generate_decision_layer_cell_seabed(session,g)
     
 
     # wind_files = layers.download_wind_files()
-    # decision_layer.generate_decision_layer_cell_wind(session, g)
+    decision_layer.generate_decision_layer_cell_wind(session, g)
 
 
     session.close()

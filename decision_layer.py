@@ -88,7 +88,7 @@ def generate_decision_layer_cell_seabed(session, grid):
 def generate_decision_layer_cell_wind(session, grid, target_dir=None):
     if target_dir is None:
         target_dir = config.WIND_FILE_DIR
-    speed, direction, stdev = aggregate_wind(session, grid)
+    speed, direction, stdev = aggregate_wind(session, grid, absolute=True)
     grid_cells = session.query(models.DecisionLayerCell, models.GridCell).join(models.GridCell).filter(models.GridCell.grid_id == grid.id).all()
     for cell in grid_cells:
         grid_box = to_shape(cell.GridCell.bounding_box)
