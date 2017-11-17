@@ -65,18 +65,23 @@ def generate_decision_layer_cell_seabed(session, grid):
 
     for cell in grid_cells:
         grid_box = to_shape(cell.GridCell.bounding_box)
-
-        wfs_url = "http://drive.emodnet-geology.eu/geoserver/EMODnetGeology/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=EMODnetGeology:seabed_substrate250k_eu_sbss250k_seabed_substrate_eu&bbox="+str(grid_box.bounds).strip("(").strip(")")+"&outputFormat=application%2Fjson"
-        r = requests.get(wfs_url)
-        wfs_geo = geojson.loads(r.content)
-
-        wfs_gdf = GeoDataFrame.from_features(wfs_geo)
-
-        if len(wfs_gdf) > 0:
-            if len(wfs_gdf[wfs_gdf.folk_5_substrate_class.str.contains('Rock & Boulders')]) > 0:
-                cell.DecisionLayerCell.seabed = wfs_gdf[wfs_gdf.folk_5_substrate_class.str.contains('Rock & Boulders')].shape_area.sum()/grid_box.area * 100
-            else:
-                cell.DecisionLayerCell.seabed = 0
+       
+        lonmin,lonmax,latmin,latmax = grid_box.bounds
+        bbox_string = ",".join(map(str, [latmin,lonmin,latmax,lonmax]))
+        wfs_url = "http://drive.emodnet-geology.eu/geoserver/EMODnetGeology/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=EMODnetGeology:seabed_substrate250k_eu_sbss250k_seabed_substrate_eu&bbox="+bbox_string+"&outputFormat=application%2Fjson"
+     
+        try:
+            r = requests.get(wfs_url)
+            wfs_geo = geojson.loads(r.content)
+     
+            wfs_gdf = GeoDataFrame.from_features(wfs_geo)
+            if len(wfs_gdf) > 0:
+                if len(wfs_gdf[wfs_gdf.folk_5_substrate_class.str.contains('2. Sand')]) > 0:
+                    cell.DecisionLayerCell.seabed = wfs_gdf[wfs_gdf.folk_5_substrate_class.str.contains('2. Sand')].shape_area.sum()/grid_box.area * 100
+                else:
+                    cell.DecisionLayerCell.seabed = 0
+        except ValueError:
+            pass
     session.commit()
 
 
