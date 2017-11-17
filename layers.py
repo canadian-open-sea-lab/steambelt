@@ -97,7 +97,7 @@ def download_wind_files(target_dir=None):
                     'end_time': time.strftime('%Y-%m-%dT%H:%M:%SZ')
                 }
                 try:
-                    r = requests.get(url, stream=True)
+                    r = requests.get(url, stream=True, timeout=90)
                     r.raise_for_status()
                     if target_dir is None:
                         target_dir = config.WIND_FILE_DIR
