@@ -96,13 +96,16 @@ def download_wind_files(target_dir=None):
                     'start_time': time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'end_time': time.strftime('%Y-%m-%dT%H:%M:%SZ')
                 }
-                r = requests.get(url, stream=True)
-                r.raise_for_status()
-                if target_dir is None:
-                    target_dir = config.WIND_FILE_DIR
-                with open(os.path.join(target_dir, '%s%s%s%s.nc' % (year, month, target_day.day, c)), 'wb') as tf:
-                    for block in r.iter_content(1024):
-                        tf.write(block)
+                try:
+                    r = requests.get(url, stream=True)
+                    r.raise_for_status()
+                    if target_dir is None:
+                        target_dir = config.WIND_FILE_DIR
+                    with open(os.path.join(target_dir, '%s%s%s%s.nc' % (year, month, target_day.day, c)), 'wb') as tf:
+                        for block in r.iter_content(1024):
+                            tf.write(block)
+                except requests.exceptions.HTTPError:
+                    print "Failed to download: %s" % url
     return created_files
 
 
