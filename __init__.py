@@ -5,6 +5,7 @@ import models
 
 import grid
 import decision_layer
+import layers
 
 
 def main():
@@ -20,12 +21,17 @@ def main():
     g = grid.create_grid('Emodnet', from_shape(bounds, srid=4326), 0.5)
     grid.generate_grid_cells(g)
 
-    dl = decision_layer.generate_decision_layer(session, g)
-    decision_layer.generate_decision_layer_cells(session, dl)
+    # dl = decision_layer.generate_decision_layer(session, g)
+    # decision_layer.generate_decision_layer_cells(session, dl)
 
-    decision_layer.generate_decision_layer_cell_depth(session, '/Users/alexnunes/Desktop/osl_bathymetry/bathymetry/', g)
-
+    # decision_layer.generate_decision_layer_cell_depth(session, '/Users/alexnunes/Desktop/osl_bathymetry/bathymetry/', g)
     decision_layer.generate_decision_layer_cell_seabed(session,g)
+    
+
+    wind_files = layers.download_wind_files()
+    decision_layer.generate_decision_layer_cell_wind(session, grid)
+
+
     session.close()
     return
 

@@ -1,10 +1,14 @@
 import datetime
 from geoalchemy2.shape import to_shape
-import models
-from layers import aggregate_depth
+import numpy as np
+
 import requests
 import geojson
 from geopandas import GeoSeries, GeoDataFrame
+
+import config
+import models
+from layers import aggregate_depth, aggregate_wind
 
 
 def generate_decision_layer(session, grid):
@@ -46,6 +50,7 @@ def generate_decision_layer_cells(session, decision_layer):
     session.bulk_insert_mappings(models.DecisionLayerCell, decision_cells)
     session.commit()
 
+
 def generate_decision_layer_cell_depth(session,path,grid):
     grid_cells = session.query(models.DecisionLayerCell, models.GridCell).join(models.GridCell).filter(models.GridCell.grid_id == grid.id).all()
     depth_list = []
@@ -72,4 +77,33 @@ def generate_decision_layer_cell_seabed(session, grid):
                 cell.DecisionLayerCell.seabed = wfs_gdf[wfs_gdf.folk_5_substrate_class.str.contains('Rock & Boulders')].shape_area.sum()/grid_box.area * 100
             else:
                 cell.DecisionLayerCell.seabed = 0
+    session.commit()
+
+
+def generate_decision_layer_cell_wind(session, grid, target_dir=None):
+    if target_dir is None:
+        target_dir = config.WIND_FILE_DIR
+    speed, direction, stdev = aggregate_wind(session, grid)
+    grid_cells = session.query(models.DecisionLayerCell, models.GridCell).join(models.GridCell).filter(models.GridCell.grid_id == grid.id).all()
+    for cell in grid_cells:
+        grid_box = to_shape(cell.GridCell.bounding_box)
+        min_lon,min_lat,max_lon,max_lat = grid_box.bounds
+        lon_filter = (speed.columns.values >= min_lon) & (speed.columns.values <= max_lon)
+        lat_filter = (speed.index.values >= min_lat) & (speed.index.values <= max_lat)
+
+        try:
+            cell_speed = speed.loc[lat_filter, lon_filter].mean().values[0]
+            if np.isnan(cell_speed):
+                cell_speed = None
+            cell_direction = direction.loc[lat_filter, lon_filter].mean().values[0]
+            if np.isnan(cell_direction):
+                cell_direction = None
+            cell_stdev = stdev.loc[lat_filter, lon_filter].mean().values[0]
+            if np.isnan(cell_stdev):
+                cell_stdev = None
+            cell.DecisionLayerCell.wind_speed = cell_speed
+            cell.DecisionLayerCell.wind_direction = cell_direction
+            cell.DecisionLayerCell.wind_std_dev = cell_stdev
+        except IndexError:
+            pass
     session.commit()
